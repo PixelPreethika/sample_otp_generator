@@ -1,99 +1,13 @@
-# from tkinter import *
-# from tkinter import messagebox
-# import ast
-
-# window =Tk()
-# window.title("Register") 
-# window.geometry("925x500+300+200")
-# window.configure(bg="#fff")
-# window.resizable(False,False)  
-# def signup():
-#     username = user.get()
-#     password = userpwd.get()
-#     cfmpwd = usercfmpwd.get()
-#     print("user : ", username, " : pwd : ", password, " : cfmpwd : ", cfmpwd)
-#     if password == cfmpwd:
-#         try:
-#             # Attempt to read existing data from the file
-#             with open("datasheet.txt", "r+") as file:
-#                 d = file.read()
-#                 if d:  # Check if file is not empty
-#                     r = ast.literal_eval(d)
-#                 else:
-#                     r = {}  # If file is empty, initialize as empty dictionary
-
-#                 dict2 = {username: password}
-#                 r.update(dict2)
-
-#                 file.seek(0)  # Move file pointer to the beginning
-#                 file.truncate()  # Clear the file content
-#                 file.write(str(r))  # Write updated data back to the file
-
-#             messagebox.showinfo('Signup', "Success")
-#         except Exception as e:
-#             messagebox.showerror("Error", str(e))
-#     else:
-#         messagebox.showerror("Invalid", "Both passwords must match")             
-# img =PhotoImage(file="register.png")
-# Label(window,image=img,bg="white").place(x=50,y=90)
-
-# frame= Frame(window,height=390,width=350,bg='#fff')
-
-# frame.place(x=480, y=50)
-
-# heading = Label(frame, text="Register", fg="#57a1f8", bg="white", font=("Microsoft YaHei UI Light", 23, "bold"))
-# heading.place(x=100, y=5)
-
-# user = Entry(frame, width=25, fg="black", border=0, bg="white",font=("Microsoft YaHei UI Light", 11))
-# user.place(x=30, y=80)  
-# user.insert(0,"Username")
-
-# Frame(frame,width=295,height=2,bg="black").place(x=25,y=107)
-
-
-# userpwd = Entry(frame, width=25, fg="black", border=0, bg="white",font=("Microsoft YaHei UI Light", 11))
-# userpwd.place(x=30, y=150)  
-# userpwd.insert(0,"Password")
-
-# Frame(frame,width=295,height=2,bg="black").place(x=25,y=177)
-
-# usercfmpwd = Entry(frame, width=25, fg="black", border=0, bg="white",font=("Microsoft YaHei UI Light", 11))
-# usercfmpwd.place(x=30, y=220)  
-# usercfmpwd.insert(0,"Confirm Password")
-
-# Frame(frame,width=295,height=2,bg="black").place(x=25,y=247)
-
-
-# Button(frame,width=39,pady=7,text="Sign up", bg="#57a1f8",fg="white",border=0,command=signup).place(x=35,y=280)
-# label = Label(frame, text="I have an account", fg="black", bg="white", font=("Microsoft YaHei UI Light", 9))
-# label.place(x=90, y=340)
-
-# signin = Button(frame,width=6,text="Sign in",border=0,bg="white",cursor="hand2",fg="#57a1f8").place(x=200, y=340)
-
-# window.mainloop()
-
 
 from tkinter import *
 from tkinter import messagebox
 from database import register_user
 from plyer import notification
 from createuser import create_page
-from otpgenerator import generate_dob_otp
-# from Project.login import login_page
+from otpgenerator import generate_user_otp, generate_otp, verify_user_input
+import socket
 
-# class RegistrationForm:
-    # def register(self):
-    #     name = self.entry_name.get()
-    #     email = self.entry_email.get()
-    #     password = self.entry_password.get()
-
-    #     if not name or not email or not password:
-    #         messagebox.showerror("Error", "Please fill in all fields.")
-    #         return
-
-    #     register_user(name, email, password)
-    #     messagebox.showinfo("Success", "Registration successful!")
-
+hashed = None
 def register_page(login):
     window =Tk()
     window.title("Register") 
@@ -162,47 +76,53 @@ def register_page(login):
             try:
                 register_user(first_name, email,last_name,country,phone_number,date_of_birth)
                 try:
-                    otp = generate_dob_otp(first_name,date_of_birth)
-                    full_title="Hello "+first_name+"!"
-                    full_message ="Your OTP is " + otp
-                    notification.notify(
-                        title=full_title,
-                        message=full_message,
-                        app_icon = None,
-                        timeout=60,
-                        toast=False
-                    )
-                    
-                    def verify_otp():
+                    def otpgen():
+                        global hashed
+                        otp = generate_user_otp(first_name)
+                        ip = socket.gethostbyname(socket.gethostname())
+                        hashed = generate_otp(ip,otp)
+                        full_title="Hello "+first_name+"!"
+                        full_message ="Your OTP is " + otp
+                        notification.notify(
+                            title=full_title,
+                            message=full_message,
+                            app_icon = None,
+                            timeout=60,
+                            toast=False
+                        )
+                    def verify_otp(entry):
+                        ip_address = socket.gethostbyname(socket.gethostname())
                         entered_otp = entry.get()
+                        
 
-                        # Perform your verification logic here
-                        # For example, you can check if the entered OTP matches the expected OTP
-                        expected_otp = "1234"  # Change "1234" to your expected OTP
-
-                        if entered_otp == otp:
+                        if verify_user_input(ip_address, entered_otp, hashed):
                             messagebox.showinfo("Verification Result", "OTP Verified Successfully!")
-                            root.destroy()  # Close the Tkinter window if OTP matches
+                            otp_window.destroy()  
                             window.destroy()
                             create_page(login)
-                            
                         else:
                             messagebox.showerror("Verification Result", "Invalid OTP!")
-                    root =Tk()
-                    root.title("OTP Verification")
-                    root.geometry("100x100+500+300")
-                    # Create a label and an entry widget for OTP input
-                    label = Label(root, text="Enter OTP:")
+                    def resend_otp():
+                        otpgen()
+
+                    otpgen()
+                    otp_window = Tk()
+                    otp_window.title("OTP Verification")
+                    otp_window.geometry("200x100")
+                    otp_window.attributes('-topmost', True) # sets this as topmost window
+                    
+                    label = Label(otp_window, text="Enter OTP:")
                     label.pack()
-                    entry = Entry(root)
-                    entry.pack()
-
-                    # Create a button to trigger OTP verification
-                    verify_button =Button(root, text="Verify OTP", command=verify_otp)
+                    
+                    otp_entry = Entry(otp_window)
+                    otp_entry.pack()
+                    
+                    verify_button = Button(otp_window, text="Verify OTP", command=lambda: verify_otp(otp_entry))
                     verify_button.pack()
-
-                    # Run the Tkinter event loop
-                    root.mainloop()
+                    
+                    resend_button = Button(otp_window, text="Resend OTP", command=resend_otp)
+                    resend_button.pack()
+                    otp_window.mainloop()
                 except Exception as e:
                     print("Error:", e)
             except Exception as e:
@@ -216,13 +136,6 @@ def register_page(login):
 
     heading = Label(frame, text="Register", fg="#57a1f8", bg="white", font=("Microsoft YaHei UI Light", 23, "bold"))
     heading.place(relx=0.5, rely=0.05, anchor=CENTER)
-    
-
-    # user = Entry(frame, width=25, fg="black", border=0, bg="white",font=("Microsoft YaHei UI Light", 11))
-    # user.place(x=10, y=80)  
-    # user.insert(0,"Username")
-    
-    # Frame(frame,width=295,height=2,bg="black").place(x=5,y=107)
     
     first_name_entry = Entry(frame, width=25, fg="black", border=0, bg="white", font=("Microsoft YaHei UI Light", 11))
     first_name_entry.place(x=30, y=80) 
@@ -239,19 +152,6 @@ def register_page(login):
     last_name_entry.bind("<FocusIn>", enter_ln)
     last_name_entry.bind("<FocusOut>", leave_ln)
     Frame(frame, width=295, height=2, bg="black").place(x=25,y=178)
-    
-    # userfn = Entry(frame, width=25, fg="black", border=0, bg="white",font=("Microsoft YaHei UI Light", 11))
-    # userfn.place(x=30, y=80)  
-    # userfn.insert(0,"fname")
-
-    # Frame(frame,width=295,height=2,bg="black").place(x=295,y=107)
-
-
-    # userpwd = Entry(frame, width=25, fg="black", border=0, bg="white",font=("Microsoft YaHei UI Light", 11))
-    # userpwd.place(x=30, y=150)  
-    # userpwd.insert(0,"Password")
-
-    # Frame(frame,width=295,height=2,bg="black").place(x=25,y=177)
 
     useremail = Entry(frame, width=25, fg="black", border=0, bg="white",font=("Microsoft YaHei UI Light", 11))
     useremail.place(x=30, y=220)  
@@ -287,16 +187,6 @@ def register_page(login):
     Frame(frame,width=295,height=2,bg="black").place(x=490,y=247)
 
 
-    
-
-    # Frame(frame,width=295,height=2,bg="black").place(x=25,y=247)
-
-    # useremail = Entry(frame, width=25, fg="black", border=0, bg="white",font=("Microsoft YaHei UI Light", 11))
-    # useremail.place(x=30, y=150)  
-    # useremail.insert(0,"email")
-
-   # Frame(frame,width=295,height=2,bg="black").place(x=25,y=247)
-
     Button(frame,width=39,pady=7,text="Sign up", bg="#57a1f8",fg="white",border=0,command=signup).place(x=280,y=280)
     label = Label(frame, text="I have an account", fg="black", bg="white", font=("Microsoft YaHei UI Light", 9))
     label.place(x=350, y=340)
@@ -304,3 +194,4 @@ def register_page(login):
 
     signin = Button(frame,width=6,text="Sign in",border=0,bg="white",cursor="hand2",fg="#57a1f8",command=log_in).place(x=460, y=340)
     window.mainloop()
+

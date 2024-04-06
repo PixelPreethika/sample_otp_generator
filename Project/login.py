@@ -1,6 +1,5 @@
 from tkinter import *
 from tkinter import messagebox
-from otpgenerator import generate_otp
 from plyer import notification
 from homepage import home_page
 from database import login_user
@@ -9,9 +8,13 @@ from createuser import create_page
 from register import register_page
 from flask import session, request
 import os
+import socket
+from securekey import generate_encryption_key, decrypt_secret_key
+from otpgenerator import verify_otp
 
 
 loggedin_user = None
+hashed = None
 def login_page():
     window = Tk()
     window.title("Login")
@@ -44,42 +47,37 @@ def login_page():
         if(user_name!= "Username" and user_pwd != "Password"):
             val = login_user(user_name, user_pwd)
         else:
+            val = None
             messagebox.showerror("nvalid", "Please enter Username and Password")
         # val = "1"
         if (val != None):
             try:
-                def otpgen():
-                    global otp
-                    otp = generate_otp(user_name)
-                    full_title = "Hello " + user_name + "!"
-                    full_message = "Your OTP is " + otp
-                    notification.notify(
-                        title=full_title,
-                        message=full_message,
-                        app_icon=None,
-                        timeout=60,
-                        toast=False
-                    )
-
-                def verify_otp(entry, otp_window):
-                    entered_otp = entry.get()
-                    global otp
-                    if entered_otp == otp:
-                        loggedin_user = user_name
-                        messagebox.showinfo("Verification Result", "OTP Verified Successfully!")
-                        otp_window.destroy()  # Close the OTP verification window
+                def verify(otp_entry):
+                    entry =otp_entry.get()
+                    print("otp : ",entry, otp_entry)
+                    print(val[0][0], " : ",val[0][1] ," : ",val[0][2], entry)
+                    encrpted_data= val[0][0]
+                    iv = val[0][1]
+                    encryption_key = val[0][2]
+                    print("login encryption_key : ",encryption_key)
+                    key = decrypt_secret_key(encrpted_data,iv,encryption_key)
+                    result = verify_otp(key,entry)
+                    if verify_otp(key, entry):
+                        print("Verification Successful! Proceed with user authentication.")
+                        otp_window.destroy()
                         window.destroy()
-                        home_page(login_page, loggedin_user)  # Redirect to the home page or perform other actions after successful verification
+                        home_page(login_page, loggedin_user)
                     else:
-                        messagebox.showerror("Verification Result", "Invalid OTP!")
-
-                def resend_otp():
-                    otp = otpgen()
-
-                otp = otpgen()
-                otp_window = Toplevel()
+                        print("Verification Failed! Handle failed authentication.")
+                    # if result:
+                    #     window.destroy()
+                    #     home_page(login_page, loggedin_user)
+                    # else:
+                    #     messagebox.showerror("Verification Result", "Invalid OTP!")
+                otp_window = Tk()
                 otp_window.title("OTP Verification")
                 otp_window.geometry("200x100")
+                otp_window.attributes('-topmost', True) # sets this as topmost window
                 
                 label = Label(otp_window, text="Enter OTP:")
                 label.pack()
@@ -87,52 +85,9 @@ def login_page():
                 otp_entry = Entry(otp_window)
                 otp_entry.pack()
                 
-                verify_button = Button(otp_window, text="Verify OTP", command=lambda: verify_otp(otp_entry, otp_window))
+                verify_button = Button(otp_window, text="Verify OTP", command=lambda: verify(otp_entry))
                 verify_button.pack()
-                
-                resend_button = Button(otp_window, text="Resend OTP", command=resend_otp)
-                resend_button.pack()
                 otp_window.mainloop()
-                # def otpgen():
-                #     otp = generate_otp(user_name)
-                #     full_title="Hello "+user_name+"!"
-                #     full_message ="Your OTP is " + otp
-                #     notification.notify(
-                #         title=full_title,
-                #         message=full_message,
-                #         app_icon = None,
-                #         timeout=60,
-                #         toast=False
-                #     )
-                #     return otp
-                # otp = otpgen()
-                # def verify_otp():
-                #     entered_otp = entry.get()
-
-                #     if entered_otp == otp:
-                #         messagebox.showinfo("Verification Result", "OTP Verified Successfully!")
-                #         root.destroy()  # Close the Tkinter window if OTP matches
-                #         window.destroy()
-                #         home_page()
-                        
-                #     else:
-                #         messagebox.showerror("Verification Result", "Invalid OTP!")
-                # root =Tk()
-                # root.title("OTP Verification")
-                # # Create a label and an entry widget for OTP input
-                # label = Label(root, text="Enter OTP:")
-                # label.pack()
-                # entry = Entry(root)
-                # entry.pack()
-
-                # # Create a button to trigger OTP verification
-                # verify_button =Button(root, text="Verify OTP", command=verify_otp)
-                # verify_button.pack()
-                # resend = Button(root, text="Resend OTP", fg="black", bg="white", font=("Microsoft YaHei UI Light", 9),command=otpgen())
-                # resend.pack()
-
-                # # Run the Tkinter event loop
-                # root.mainloop()
             except Exception as e:
                 print("Error:", e)
         else:
@@ -180,4 +135,3 @@ def login_page():
     label.place(x=70, y=250)
     signin = Button(frame,width=6,text="Sign up",border=0,bg="white",cursor="hand2",fg="#57a1f8",command=register).place(x=215, y=250)
     window.mainloop()
-# login_page()

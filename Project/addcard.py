@@ -13,12 +13,6 @@ def addcard_page(login,home,loggedin_user):
     window.geometry("925x500+300+200")
     window.configure(bg="#fff")
     window.resizable(False,False)
-    # def enter_cardtype(event):
-    #     cardtype.delete(0, "end")
-
-    # def leave_cardtype(event):
-    #     if cardtype.get() == '':
-    #         cardtype.insert(0, "Card Type") 
             
     def enter_cardno(event):
         if cardno.get() == 'Card Number':
@@ -51,7 +45,6 @@ def addcard_page(login,home,loggedin_user):
         dt = expdt.get()
         cv = cvv.get()
         if (card != "Select Card Type") and (num != "Card Number") and (dt != "Expiry Date") and (cv != "CVV"):
-        # Your code here
             card_details(card,num,dt, cv,loggedin_user)
             messagebox.showinfo("Success", "Card Added Successfully!")
             window.destroy()
@@ -65,31 +58,10 @@ def addcard_page(login,home,loggedin_user):
     heading = Label(frame, text="Add Card", fg="#57a1f8", bg="white", font=("Microsoft YaHei UI Light", 23, "bold"))
     heading.place(relx=0.5, rely=0.05, anchor=CENTER)
 
-    # cardtype = Entry(frame, width=25, fg="black", border=0, bg="white",font=("Microsoft YaHei UI Light", 11))
-    # cardtype.place(x=30, y=100)  
-    # cardtype.insert(0,"Card Type")
-    # # cardtype.config(state='readonly')
-
-    # # Bind the function to clear the entry when the user starts typing
-    # cardtype.bind("<FocusIn>", enter_cardtype)
-    # cardtype.bind("<FocusOut>", leave_cardtype)
-
-    # Frame(frame,width=295,height=2,bg="black").place(x=25,y=127)
-
     cardtype = Combobox(frame, width=35, state="readonly", font=("Microsoft YaHei UI Light", 11))
     cardtype['values'] = ("Select Card Type", "Debit Card", "Credit Card")
     cardtype.current(0)  # Select the default option
     cardtype.place(x=25, y=100)
-
-
-    # cardno = Entry(frame, width=25, fg="black", border=0, bg="white",font=("Microsoft YaHei UI Light", 11))
-    # cardno.place(x=30, y=170)  
-    # cardno.config(state="disabled")
-    # cardno.insert(0,"Card Number")
-
-    # cardno.bind("<FocusIn>", enter_cardno)
-    # cardno.bind("<FocusOut>", leave_cardno)
-    # Frame(frame,width=295,height=2,bg="black").place(x=25,y=198)
 
     cardno = Entry(frame, width=35, fg="black", border=0, bg="white", font=("Microsoft YaHei UI Light", 11))
     cardno.place(x=30, y=170)
@@ -122,4 +94,3 @@ def addcard_page(login,home,loggedin_user):
 
     Button(frame,width=39,pady=7,text="Submit", bg="#57a1f8",fg="white",border=0, command=addcard).place(x=280,y=280)
     window.mainloop()
-# addcard_page()

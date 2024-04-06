@@ -9,7 +9,7 @@ def create_tables():
             port=8001,         # Port you mapped when starting the container
             user="root",       # Root user by default
             password="12345",  # Password you set when starting the container
-            database="mydatabase"    # Optional: specify the database you want to connect to
+            database="mydb"    # Optional: specify the database you want to connect to
         )
 
         # Create a cursor object to execute SQL queries
@@ -21,7 +21,10 @@ def create_tables():
             CREATE TABLE IF NOT EXISTS login (
                 loginid INT(6) AUTO_INCREMENT PRIMARY KEY,
                 username VARCHAR(50),
-                password VARCHAR(12)
+                password VARCHAR(12),
+                secretkey varchar(255),
+                iv varchar(255),
+                pwdkey VARBINARY(255)
             )""",
             """
             CREATE TABLE IF NOT EXISTS carddetails (
