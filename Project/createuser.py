@@ -6,7 +6,7 @@ import qrcode
 import tkinter as tk
 from PIL import Image, ImageTk
 import tkinter.messagebox as messagebox
-from otp_verify import generate_secret_key, generate_qr_code
+from otpgenerator import generate_secret_key, generate_qr_code
 from securekey import generate_encryption_key,encrypt_secret_key
 
 def create_page(login):
